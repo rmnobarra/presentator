@@ -22,12 +22,18 @@ jobs:
         run: |
           npm init -y
           npm install reveal.js
-          npm install @reveald/markdown
+          npm install marked
           npm install glob
+          npm install front-matter
           
       - name: Create output directory
         run: mkdir -p dist
         
+      - name: Copy reveal.js assets
+        run: |
+          mkdir -p dist/reveal.js
+          cp -r node_modules/reveal.js/dist dist/reveal.js/
+          
       - name: Generate presentations
         run: |
           node .github/scripts/generate.js
