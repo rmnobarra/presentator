@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const glob = require('glob');
+const { glob } = require('glob');
 const { marked } = require('marked');
 const frontMatter = require('front-matter');
 
@@ -49,27 +49,31 @@ function convertMarkdownToSlides(markdown) {
 }
 
 // Process all markdown files
-glob('PRESENTATIONS/**/*.md', (err, files) => {
-  if (err) {
-    console.error('Error finding markdown files:', err);
+async function main() {
+  try {
+    const files = await glob('PRESENTATIONS/**/*.md');
+    
+    for (const file of files) {
+      const fileContent = fs.readFileSync(file, 'utf-8');
+      const { attributes, body } = frontMatter(fileContent);
+      const fileName = path.basename(file, '.md');
+      
+      // Convert markdown to HTML slides
+      const slidesHtml = convertMarkdownToSlides(body);
+      
+      // Create HTML file with front matter options
+      const outputPath = path.join('dist', `${fileName}.html`);
+      fs.writeFileSync(
+        outputPath,
+        template(slidesHtml, fileName, attributes)
+      );
+      
+      console.log(`Generated ${outputPath}`);
+    }
+  } catch (err) {
+    console.error('Error processing files:', err);
     process.exit(1);
   }
+}
 
-  files.forEach(file => {
-    const fileContent = fs.readFileSync(file, 'utf-8');
-    const { attributes, body } = frontMatter(fileContent);
-    const fileName = path.basename(file, '.md');
-    
-    // Convert markdown to HTML slides
-    const slidesHtml = convertMarkdownToSlides(body);
-    
-    // Create HTML file with front matter options
-    const outputPath = path.join('dist', `${fileName}.html`);
-    fs.writeFileSync(
-      outputPath,
-      template(slidesHtml, fileName, attributes)
-    );
-    
-    console.log(`Generated ${outputPath}`);
-  });
-}); 
+main(); 
